@@ -1,11 +1,20 @@
 # GB-Convert
 ---
-Gameboy-convert is a simple tool to convert png images, into a format supported Gameboy assembly.
+Gameboy-convert is a simple tool to convert png images, into a format supported by Gameboy assembly.
 
 
 It currently takes in a Nx8 size png file, and outputs it in an assembly format you can use when developing for the
 Gameboy.  Eventually this will be used in a Gameboy homebrew tutorial I am writing on my website (https://siobyte.xyz).
 
+
+### Make
+```
+    mkdir build
+    mkdir obj
+    make
+```
+
+### Example usage
 ```
 (mytiles.png = 32x8)
 
