@@ -11,6 +11,8 @@ The tiles conversion takes a 8 pixel high, and X pixels long image and outputs t
 The map conversion takes in a 256x256 image (32x32 tiles), and matches the tiles in the image, with the tiles from
 your tilesheet, and outputs the assembly equivalent of your map for use on the Gameboy.
 
+The -i flag inverts the color order, useful if you want to change the transparent color for sprite layers, etc
+
 ### Make
 ```
 mkdir build
@@ -23,7 +25,7 @@ make
 (mytiles.png = 32x8 )
 (mymap.png   = 32x32)
 
-./gb-convert -tiles mytiles.png -map mymap.png >> output.txt
+./gb-convert -i -tiles mytiles.png -map mymap.png >> output.txt
 
     >> output.txt - 4 tiles - 16 bytes each
     TILE_DATA:

@@ -7,7 +7,8 @@
 	"./gb-convert -tiles mytiles.png -map mymap.png >> output.txt"
 
 	TODO:
-	-better image size support
+	-better image size support (?)
+	-???
 */
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -23,14 +24,27 @@ int bytecount = 0;
 unsigned short int tiledata[192*16];
 unsigned short int mapdata[32*32];
 
+unsigned short int tilev[8] = {0b00000001, 0b00000001, 0b00000000, 0b00000001, 0b00000001, 0b00000000, 0b00000000, 0b00000000};
+
 int main(int argc, char *argv[])
 {
+
 	int i;
 	for (int i=0; i<argc; i++) {
 		if (strcmp("-tiles", argv[i]) == 0)
 			ConvertTiles(argv[i+1]);
 		else if (strcmp("-map", argv[i]) == 0)
 			ConvertMap(argv[i+1]);
+		else if (strcmp("-i", argv[i]) == 0) {
+			tilev[0] = 0b00000000;
+			tilev[1] = 0b00000000;
+			tilev[2] = 0b00000000;
+			tilev[3] = 0b00000001;
+			tilev[4] = 0b00000001;
+			tilev[5] = 0b00000000;
+			tilev[6] = 0b00000001;
+			tilev[7] = 0b00000001;
+		}
 	}
 
 	return 1;
@@ -54,18 +68,18 @@ void ConvertTiles(const char *file)
 			int shift = 7;
 			for (int x=0; x<8; x++) {
 				int index = 4 * (((y * w) + x) + (i*8));
-				unsigned short int cbit1  = 0b00000001;
-				unsigned short int cbit2  = 0b00000001;
+				unsigned short int cbit1  = tilev[0];
+				unsigned short int cbit2  = tilev[1];
 
 				if (data[index] > 60 && data[index] < 120) {
-					cbit1  = 0b00000000;
-					cbit2  = 0b00000001;
+					cbit1  = tilev[2];
+					cbit2  = tilev[3];
 				} else if (data[index] > 119 && data[index] < 180) {
-					cbit1  = 0b00000001;
-					cbit2  = 0b00000000;
+					cbit1  = tilev[4];
+					cbit2  = tilev[5];
 				} else if (data[index] > 179) {
-					cbit1  = 0b00000000;
-					cbit2  = 0b00000000;
+					cbit1  = tilev[6];
+					cbit2  = tilev[7];
 				}
 				
 				tiledata[bytecount]   |= (cbit1 << shift);
