@@ -1,7 +1,7 @@
 /*
-	gb-convert by siObyte
-	-github.com/siobyte
-	-siobyte.xyz
+	gb-convert by exezin
+	-github.com/exezin
+	-http://exez.in
 
 	example usage:
 	"./gb-convert -tiles mytiles.png -map mymap.png >> output.txt"
@@ -15,16 +15,26 @@
 #include <inc/stb_image.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <inttypes.h>
 
-void ConvertTiles(const char *file);
-void ConvertMap(const char *file);
+#define TILE_WIDTH 8
+#define TILE_HEIGHT 8
+
+void convert_tiles(const char *file);
+void convert_map(const char *file);
 
 int tilecount = 0;
 int bytecount = 0;
-unsigned short int tiledata[192*16];
-unsigned short int mapdata[32*32];
+uint8_t tiledata[192*16];
+uint8_t mapdata[32*32];
 
-unsigned short int tilev[8] = {0b00000001, 0b00000001, 0b00000000, 0b00000001, 0b00000001, 0b00000000, 0b00000000, 0b00000000};
+// pixel shades
+uint8_t tilev[8] = {
+	0b00000001, 0b00000001,
+	0b00000000, 0b00000001,
+	0b00000001, 0b00000000,
+	0b00000000, 0b00000000
+};
 
 int main(int argc, char *argv[])
 {
@@ -32,10 +42,11 @@ int main(int argc, char *argv[])
 	int i;
 	for (int i=0; i<argc; i++) {
 		if (strcmp("-tiles", argv[i]) == 0)
-			ConvertTiles(argv[i+1]);
+			convert_tiles(argv[i+1]);
 		else if (strcmp("-map", argv[i]) == 0)
-			ConvertMap(argv[i+1]);
+			convert_map(argv[i+1]);
 		else if (strcmp("-i", argv[i]) == 0) {
+			// invert pixel shades
 			tilev[0] = 0b00000000;
 			tilev[1] = 0b00000000;
 			tilev[2] = 0b00000000;
@@ -50,48 +61,54 @@ int main(int argc, char *argv[])
 	return 1;
 }
 
-void ConvertTiles(const char *file)
+void convert_tiles(const char *file)
 {
 	int n, w, h;
-	unsigned char *data = stbi_load(file, &w, &h, &n, 4);
+	uint8_t *data = stbi_load(file, &w, &h, &n, 4);
 
 	if (data == NULL) {
 		printf("Failed to load file %s\n", file);	
-		return;	
+		return;
 	}
-
-	/* 8x8 pixels, 2 bits per pixel, 2 bytes per line */
-	int i, x, y;
-	tilecount = floor(w/8);
+	// 8x8 pixels, 2 bits per pixel, 2 bytes per line
+	tilecount = floor(w/TILE_WIDTH)*floor(h/TILE_HEIGHT);
+	int x_offset = 0;
 	for (int i=0; i<tilecount; i++) {
-		for (int y=0; y<8; y++) {
+		for (int y=0; y<TILE_HEIGHT; y++) {
 			int shift = 7;
-			for (int x=0; x<8; x++) {
-				int index = 4 * (((y * w) + x) + (i*8));
-				unsigned short int cbit1  = tilev[0];
-				unsigned short int cbit2  = tilev[1];
+			for (int x=0; x<TILE_WIDTH; x++) {
+				// get index of first pixel for given tile index
+				int a = floor(i/(w/TILE_WIDTH))*(w*TILE_WIDTH);
+				int index = 4 * (a + (y * w) + (x_offset*TILE_WIDTH) + x);
+				uint8_t cbit1 = tilev[0];
+				uint8_t cbit2 = tilev[1];
 
-				if (data[index] > 60 && data[index] < 120) {
+				// get pixel shade from image data
+				if (data[index+1] > 60 && data[index+1] < 120) {
 					cbit1  = tilev[2];
 					cbit2  = tilev[3];
-				} else if (data[index] > 119 && data[index] < 180) {
+				} else if (data[index+1] > 119 && data[index+1] < 180) {
 					cbit1  = tilev[4];
 					cbit2  = tilev[5];
-				} else if (data[index] > 179) {
+				} else if (data[index+1] > 179) {
 					cbit1  = tilev[6];
 					cbit2  = tilev[7];
 				}
 				
+				// store tile data
 				tiledata[bytecount]   |= (cbit1 << shift);
 				tiledata[bytecount+1] |= (cbit2 << shift);
 				shift--;
 			}
 			bytecount+=2;
 		}
+		x_offset++;
+		if (x_offset >= (w/TILE_WIDTH))
+			x_offset = 0;
 	}
 
-	/* print out the bytes */
-	int c;
+	// print out the bytes
+	int c = 0;
 	printf("TILE_DATA: \n");
 	for (int i=0; i<bytecount; i++) {
 		if (c == 0)
@@ -116,23 +133,23 @@ void ConvertTiles(const char *file)
 	printf("\n\n");
 }
 
-void ConvertMap(const char *file)
+void convert_map(const char *file)
 {
 	int n, w, h;
-	unsigned char *data = stbi_load(file, &w, &h, &n, 4);
+	uint8_t *data = stbi_load(file, &w, &h, &n, 4);
 
 	if (data == NULL) {
 		printf("Failed to load file %s\n", file);	
 		return;	
 	}
 
-	/* clear map data */
+	// clear map data
 	int i;
 	for (int i=0; i<32*32; i++)
 		mapdata[i] = 0;
 
-	/* match each tile in the map to a tile in the tiles  */
-	int maptilecount = floor(w/8)*floor(h/8);
+	// match each tile in the map to a tile in the tiles
+	int maptilecount = floor(w/TILE_WIDTH)*floor(h/TILE_HEIGHT);
 	int byte         = 0;
 	int tile         = 0;
 	int tilex        = 0;
@@ -143,7 +160,7 @@ void ConvertMap(const char *file)
 		byte = 0;
 		tile = 0;
 
-		unsigned short int singletile[16];
+		uint8_t singletile[16];
 		for (int y=0; y<16; y++)
 			singletile[y] = 0;
 	
@@ -152,18 +169,18 @@ void ConvertMap(const char *file)
 			int shift = 7;
 			for (int x=0; x<8; x++) {					
 				int index = 4 * (((y+tiley) * w) + (x + tilex));
-				unsigned short int cbit1  = 0b00000001;
-				unsigned short int cbit2  = 0b00000001;
+				uint8_t cbit1 = tilev[0];
+				uint8_t cbit2 = tilev[1];
 				
-				if (data[index] > 60 && data[index] < 120) {
-					cbit1  = 0b00000000;
-					cbit2  = 0b00000001;
-				} else if (data[index] > 119 && data[index] < 180) {
-					cbit1  = 0b00000001;
-					cbit2  = 0b00000000;
-				} else if (data[index] > 179) {
-					cbit1  = 0b00000000;
-					cbit2  = 0b00000000;
+				if (data[index+1] > 60 && data[index+1] < 120) {
+					cbit1  = tilev[2];
+					cbit2  = tilev[3];
+				} else if (data[index+1] > 119 && data[index+1] < 180) {
+					cbit1  = tilev[4];
+					cbit2  = tilev[5];
+				} else if (data[index+1] > 179) {
+					cbit1  = tilev[6];
+					cbit2  = tilev[7];
 				}
 				
 				singletile[byte]   |= (cbit1 << shift);
@@ -173,13 +190,13 @@ void ConvertMap(const char *file)
 			byte+=2;
 		}
 
-		tilex += 8;
+		tilex += TILE_WIDTH;
 		if (tilex > w-1) {
-			tiley += 8;
-			tilex  = 0;	
+			tiley += TILE_HEIGHT;
+			tilex  = 0;
 		}	
 
-		/* match against on in tilemap */
+		// match against on in tilemap
 		int c;
 		for (int c=0; c<tilecount; c++) {
 			int matchcount = 0;
@@ -197,7 +214,7 @@ void ConvertMap(const char *file)
 		mapdata[i] = tile;
 	}
 
-	/* print out the map data */
+	// print out the map data
 	printf("MAP_DATA: \n");
 	int c = 0;
 	for (int y=0; y<32; y++) {
