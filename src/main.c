@@ -84,13 +84,14 @@ void convert_tiles(const char *file)
 				uint8_t cbit2 = tilev[1];
 
 				// get pixel shade from image data
-				if (data[index+1] > 60 && data[index+1] < 120) {
+				int shade = (int)(0.21f*data[index] + 0.71f*data[index+1] + 0.07f*data[index+2]);
+				if (shade > 60 && shade < 120) {
 					cbit1  = tilev[2];
 					cbit2  = tilev[3];
-				} else if (data[index+1] > 119 && data[index+1] < 180) {
+				} else if (shade > 119 && shade < 180) {
 					cbit1  = tilev[4];
 					cbit2  = tilev[5];
-				} else if (data[index+1] > 179) {
+				} else if (shade > 179) {
 					cbit1  = tilev[6];
 					cbit2  = tilev[7];
 				}
@@ -172,13 +173,14 @@ void convert_map(const char *file)
 				uint8_t cbit1 = tilev[0];
 				uint8_t cbit2 = tilev[1];
 				
-				if (data[index+1] > 60 && data[index+1] < 120) {
+				int shade = (int)(0.21f*data[index] + 0.71f*data[index+1] + 0.07f*data[index+2]);
+				if (shade > 60 && shade < 120) {
 					cbit1  = tilev[2];
 					cbit2  = tilev[3];
-				} else if (data[index+1] > 119 && data[index+1] < 180) {
+				} else if (shade > 119 && shade < 180) {
 					cbit1  = tilev[4];
 					cbit2  = tilev[5];
-				} else if (data[index+1] > 179) {
+				} else if (shade > 179) {
 					cbit1  = tilev[6];
 					cbit2  = tilev[7];
 				}
