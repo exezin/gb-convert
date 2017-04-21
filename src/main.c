@@ -70,6 +70,7 @@ void convert_tiles(const char *file)
 		printf("Failed to load file %s\n", file);	
 		return;
 	}
+
 	// 8x8 pixels, 2 bits per pixel, 2 bytes per line
 	tilecount = floor(w/TILE_WIDTH)*floor(h/TILE_HEIGHT);
 	int x_offset = 0;
@@ -84,14 +85,14 @@ void convert_tiles(const char *file)
 				uint8_t cbit2 = tilev[1];
 
 				// get pixel shade from image data
-				int shade = (int)(0.21f*data[index] + 0.71f*data[index+1] + 0.07f*data[index+2]);
-				if (shade > 60 && shade < 120) {
+				float shade = (float)(data[index] + data[index+1] + data[index+2])/255.0f;
+				if (shade > 0.7f && shade < 1.1f) {
 					cbit1  = tilev[2];
 					cbit2  = tilev[3];
-				} else if (shade > 119 && shade < 180) {
+				} else if (shade > 1.09f && shade < 1.30f) {
 					cbit1  = tilev[4];
 					cbit2  = tilev[5];
-				} else if (shade > 179) {
+				} else if (shade > 1.29f) {
 					cbit1  = tilev[6];
 					cbit2  = tilev[7];
 				}
@@ -110,7 +111,8 @@ void convert_tiles(const char *file)
 
 	// print out the bytes
 	int c = 0;
-	printf("TILE_DATA: \n");
+	printf("TILE_COUNT EQU %i \n", bytecount);
+  printf("TILE_DATA: \n");
 	for (int i=0; i<bytecount; i++) {
 		if (c == 0)
 			printf("\nDB ");
@@ -140,14 +142,9 @@ void convert_map(const char *file)
 	uint8_t *data = stbi_load(file, &w, &h, &n, 4);
 
 	if (data == NULL) {
-		printf("Failed to load file %s\n", file);	
+		printf("Failed to load file %s\n", file);
 		return;	
 	}
-
-	// clear map data
-	int i;
-	for (int i=0; i<32*32; i++)
-		mapdata[i] = 0;
 
 	// match each tile in the map to a tile in the tiles
 	int maptilecount = floor(w/TILE_WIDTH)*floor(h/TILE_HEIGHT);
@@ -156,6 +153,11 @@ void convert_map(const char *file)
 	int tilex        = 0;
 	int tiley        = 0;
 	int x, y;
+
+  // clear map data
+  int i;
+  for (int i=0; i<maptilecount; i++)
+    mapdata[i] = 0;
 
 	for (int i=0; i<maptilecount; i++) {
 		byte = 0;
@@ -166,24 +168,25 @@ void convert_map(const char *file)
 			singletile[y] = 0;
 	
 		/* get single tile data */
-		for (int y=0; y<8; y++) {
+		for (int y=0; y<TILE_HEIGHT; y++) {
 			int shift = 7;
-			for (int x=0; x<8; x++) {					
+			for (int x=0; x<TILE_WIDTH; x++) {
 				int index = 4 * (((y+tiley) * w) + (x + tilex));
-				uint8_t cbit1 = tilev[0];
-				uint8_t cbit2 = tilev[1];
-				
-				int shade = (int)(0.21f*data[index] + 0.71f*data[index+1] + 0.07f*data[index+2]);
-				if (shade > 60 && shade < 120) {
-					cbit1  = tilev[2];
-					cbit2  = tilev[3];
-				} else if (shade > 119 && shade < 180) {
-					cbit1  = tilev[4];
-					cbit2  = tilev[5];
-				} else if (shade > 179) {
-					cbit1  = tilev[6];
-					cbit2  = tilev[7];
-				}
+        uint8_t cbit1 = tilev[0];
+        uint8_t cbit2 = tilev[1];
+
+        // get pixel shade from image data
+        float shade = (float)(data[index] + data[index+1] + data[index+2])/255.0f;
+        if (shade > 0.7f && shade < 1.1f) {
+          cbit1  = tilev[2];
+          cbit2  = tilev[3];
+        } else if (shade > 1.09f && shade < 1.30f) {
+          cbit1  = tilev[4];
+          cbit2  = tilev[5];
+        } else if (shade > 1.29f) {
+          cbit1  = tilev[6];
+          cbit2  = tilev[7];
+        }
 				
 				singletile[byte]   |= (cbit1 << shift);
 				singletile[byte+1] |= (cbit2 << shift);
@@ -198,25 +201,25 @@ void convert_map(const char *file)
 			tilex  = 0;
 		}	
 
-		// match against on in tilemap
-		int c;
-		for (int c=0; c<tilecount; c++) {
-			int matchcount = 0;
-			for (int x=0; x<16; x++) {
-				if (singletile[x] == tiledata[x + (c*16)]) {
-					matchcount++;
-				}
-			}
-			if (matchcount > 15) {
-				tile = c;
-				break;
-			}
-		}
-	
+    // match against on in tilemap
+    int c;
+    for (int c=0; c<tilecount; c++) {
+      int matchcount = 0;
+      for (int x=0; x<16; x++) {
+        if (singletile[x] == tiledata[x + (c*16)]) {
+          matchcount++;
+        }
+      }
+      if (matchcount == 16) {
+        tile = c;
+        break;
+      }
+    }
 		mapdata[i] = tile;
 	}
 
 	// print out the map data
+  printf("MAP_SIZE EQU 1024 \n"); 
 	printf("MAP_DATA: \n");
 	int c = 0;
 	for (int y=0; y<32; y++) {
