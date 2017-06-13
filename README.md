@@ -3,10 +3,10 @@
 Gameboy-convert is a simple tool to convert png images, into a format supported by Gameboy assembly.
 
 
-It currently takes in a Nx8 size png file, and outputs it in an assembly format you can use when developing for the
-Gameboy.  Eventually this will be used in a Gameboy homebrew tutorial I am writing on my website (https://siobyte.xyz).
+It currently takes in a png file, and outputs it in an assembly format you can use when developing for the
+Gameboy.  Eventually this will be used in a Gameboy homebrew tutorial I am writing on my website (https://exez.in).
 
-The tiles conversion takes a 8 pixel high, and X pixels long image and outputs the assembly equivalent.
+The tiles conversion takes an arbitrarily sized image and outputs the assembly equivalent.  It splits the image up into 8x8 tiles.
 
 The map conversion takes in a 256x256 image (32x32 tiles), and matches the tiles in the image, with the tiles from
 your tilesheet, and outputs the assembly equivalent of your map for use on the Gameboy.
@@ -15,8 +15,6 @@ The -i flag inverts the color order, useful if you want to change the transparen
 
 ### Make
 ```
-mkdir build
-mkdir obj
 make
 ```
 
@@ -36,12 +34,6 @@ make
 	
     MAP_DATA:
     DB $01,$01,$00...etc
-
-    Colors should be the following (or close to) beforehand:
-    White - (255, 255, 255)
-    Grey  - (150, 150, 150)
-    DGrey - (80,  80,  80 )
-    Black - (20,  20,  20 )
 ```
 
 
@@ -50,4 +42,6 @@ make
 
 
 ### Todo
-- Better Support for arbitrary image sizes
+- [x] Better Support for arbitrary image sizes
+- [ ] RLE/Various encoding/decoding methods
+- [ ] The Gameboy assembly to encoded/decode data
