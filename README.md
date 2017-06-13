@@ -4,7 +4,7 @@ Gameboy-convert is a simple tool to convert png images, into a format supported 
 
 
 It currently takes in a png file, and outputs it in an assembly format you can use when developing for the
-Gameboy.  Eventually this will be used in a Gameboy homebrew tutorial I am writing on my website (https://exez.in).
+Gameboy.  Eventually this will be used in a Gameboy homebrew tutorial I am writing on my [website](exez.in).
 
 The tiles conversion takes an arbitrarily sized image and outputs the assembly equivalent.  It splits the image up into 8x8 tiles.
 
